@@ -1,0 +1,72 @@
+---
+- name: Install SSH
+  apt: name={{ item }} state=present
+  with_items:
+    - openssh-client
+    - openssh-server
+  tags:
+    - tools
+    - ssh
+
+- name: Install git
+  apt: name=git state=present
+  tags:
+    - tools
+    - git
+
+- name: Install vim
+  apt: name=vim state=present
+  tags:
+    - tools
+    - vim
+
+- name: Set global vimrc file
+  template: src=vimrc.j2 dest=/etc/vim/vimrc.local backup=yes
+  tags:
+    - config
+    - vim
+
+- name: Install screen
+  apt: name=screen state=present
+  tags:
+    - tools
+    - screen
+
+- name: Set global screenrc file
+  template: src=screen.j2 dest=/etc/screenrc backup=yes
+  tags:
+    - config
+    - screen
+
+- name: Install useful system monitoring software
+  apt: name={{ item }} state=present
+  with_items:
+    - htop
+    - bmon
+    - nmap
+    - sysstat
+    - iotop
+    - dstat
+  tags:
+    - tools
+
+- name: Install useful software
+  apt: name={{ item }} state=present
+  with_items:
+    - dos2unix
+    - tree
+    - build-essential
+    - unzip
+    - debconf-utils
+    - gdisk
+  tags:
+    - tools
+
+- name: Enable case-insensitive bash auto-completion
+  lineinfile: dest=/etc/inputrc
+              regexp='^set completion-ignore-case on'
+              line='set completion-ignore-case on'
+              state=present
+              backup=yes
+  tags:
+    - config
