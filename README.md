@@ -2,4 +2,5 @@ This repo contains a collection of sysadmin-related scripts which others might f
 
 # Summary of Scripts
 
+ * [ansible-host-config](ansible-host-config) - Ansible-based configuration of hosts.
  * [uofa_mounts](uofa_mounts) - A script to setup a mount point for you University of Adelaide home directory.
