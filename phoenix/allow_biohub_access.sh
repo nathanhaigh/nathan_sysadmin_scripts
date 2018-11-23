@@ -137,3 +137,9 @@ while branch="$(dirname "${branch}")"; do
 done
 
 echo -e "${NC}###############################"
+
+echo "To ensure newly created files and directories won't be readable by other,"
+echo "ensure the following line is present in ~/.bash_profile"
+echo "umask u=rwx,g=rx,o="
+
+echo "###############################"
