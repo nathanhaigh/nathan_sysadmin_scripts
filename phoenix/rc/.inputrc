@@ -1,2 +1,2 @@
-# Perform case-insensitve autocompleteion
+# Perform case-insensitive autocompletion
 set completion-ignore-case on
