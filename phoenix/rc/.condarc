@@ -1,0 +1,8 @@
+pkgs_dirs:
+  - /fast/users/$USER/.conda/pkgs
+  - $EBROOTANACONDA3/pkgs
+  - $HOME/.conda/pkgs
+envs_dirs:
+  - /fast/users/$USER/.conda/envs
+  - $HOME/.conda/envs
+  - $EBROOTANACONDA3/envs
