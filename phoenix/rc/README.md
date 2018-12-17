@@ -6,3 +6,4 @@ Useful user configuration files to modify the default behaviour of tools on `pho
  ![vim-light](./img/vimrc-light.png)
  ![vim-dark](./img/vimrc-dark.png)
  * [~/.inputrc](.inputrc) - Configuration file for GNU Readline
+ * [~/.condarc](.condarc) - Get conda to save environments and package files under `/fast/users/$USER/.conda/` rathen than `~/.conda/`.
