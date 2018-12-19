@@ -1,0 +1,10 @@
+#!/usr/bin/env perl
+# Returns the MaxMemPerCPU value from the slurm config file for the partition requested
+use warnings;
+use strict;
+
+my $partition = shift @ARGV;
+
+while(<>) {
+  /^PartitionName=$partition\s.+?MaxMemPerCPU=(\d+)/ && print $1;
+}

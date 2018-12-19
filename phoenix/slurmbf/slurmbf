@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+usage() {
+>&2 cat << EOM
+  Usage:
+    $(basename $0) [ -p <partition> ] [ -c <slurm_config_file> ] [ -h ]
+
+  Options:
+    -p Slurm partition for which you want to identify currently available resources [default: batch]
+    -c Slurm configuration file [default: /etc/slurm/slurm.conf]
+    -h this help
+EOM
+    exit 1
+}
+
+# Define colours for STDERR text
+RED='\033[0;31m'
+ORANGE='\033[0;33m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+while getopts ":p:c:h" o; do
+  case "${o}" in
+    p)
+      partition="${OPTARG}"
+      ;;
+    c)
+      slurm_config="${OPTARG}"
+      ;;
+    h)
+      usage
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+shift $((OPTIND-1))
+
+# Check inputs and set defaults as appropriate
+if [ -z "${partition}" ]; then
+  # partition not set
+  partition="batch"
+fi
+if [ -z "${slurm_config}" ]; then
+  # slurm_config not set
+  slurm_config="/etc/slurm/slurm.conf"
+fi
+
+# Validate the inputs
+if [ ! -f "${slurm_config}" ]; then
+  >&2 echo -e "${RED}ERROR: Slurm config file (${slurm_config}) either doesn't exist or is not a file${NC}"
+  #`usage
+fi
+
+# Get directory path of this executed script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+
+# Get the MaxMemPerCPU value for this partition
+partition_max_mem_per_cpu=`perl ${DIR}/partition_max_mem_per_cpu ${partition} < ${slurm_config}`
+
+sinfo --partition "${partition}" --states IDLE,MIXED --format "%R %n %C %e" --noheader \
+  | sort -k2n,2 -k 3n,3 -k1,1  \
+  | awk -v partition_max_mem_per_cpu=${partition_max_mem_per_cpu} '
+    BEGIN {
+      OFS="\t";
+      format = "%-15s %-10s %4s %8s\n";
+      printf format, "PARTITION","HOSTNAMES","CPUS","MEM(GB)";
+      printf format, "---------","---------","----","-------";
+    }
+    {
+      split($3,cpus,"/")
+      cpus_avail = cpus[2]
+
+      partition = $1
+      mem_avail = $4
+
+      if(mem_avail > partition_max_mem_per_cpu*cpus_avail) {
+        mem_avail = partition_max_mem_per_cpu*cpus_avail
+      }
+      mem_avail = sprintf("%.1f", mem_avail/1024)
+
+      if(cpus_avail>0 && $4>0) {
+        printf format, partition,$2,cpus_avail,mem_avail
+      }
+    }'

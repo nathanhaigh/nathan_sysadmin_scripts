@@ -23,3 +23,26 @@ really annoying when using `screen` or `tmux`. Simply add the following line to 
 ```bash
 unset COMMAND_PROMPT
 ```
+
+# Determine Currently Available Resources on a Slurm Partition
+
+On a busy slurm cluster it is often useful to know what resources are currently available on a partition. Slurm normally tries to fill
+these "gaps" periodically by checking the resources requested by each job in the queue and if one fits the available "gap" it will
+start to run the job. This process is known as "back-filling" is is one way Slurm increases system resources utilisation and can
+schedule jobs to run sooner.
+
+You could think of it as a game of tetris where the pieces are jobs, their sizes/shapes are the resources requested. Gaps that appear
+during the game can be filled by the system if a small enough piece is available to fill it. In doing so, a more solid/complete wall of
+blocks is achieved.
+
+Knowing the location and sizes of the resource gaps can help you to choose a resource alloocation which will fit into the gap and thus
+improve the chances that your job gets run sooner.
+
+```bash
+# check available resources on the default partition, "batch"
+./slurmbf/slurmbf
+
+# check available resources on a specified partition
+./slurmbf/slurmbf -p test
+./slurmbf/slurmbf -p gpu
+```
