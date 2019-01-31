@@ -37,7 +37,7 @@ Ugh, what a pain! There is another option:
 
 ## Automount with systemd
 
-Recent versions of Ubuntu use systemd to manage services. We can delegate the management of our phoenix mounts to `systemd` so
+Recent versions of Ubuntu (> 14.04) use `systemd` to manage services. We can delegate the management of our phoenix mounts to `systemd` so
 it takes care mounting/remounting,, so we don't have to!
 
 All we have to do is add a line to `/etc/fstab` and refresh `systemd` so it can start to manage this mount point:
