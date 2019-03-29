@@ -11,13 +11,13 @@ Download FASTQ files associated with an SRA accession using Aspera.
        See https://www.ncbi.nlm.nih.gov/books/NBK56913/#search.what_do_the_different_sra_accessi
     -l Maximum bandwidth usage (default: 50m)
     -o Output directory (default: ./)
-    -f Field containing fasp link info. (default: 'fastq_aspera').
+    -f Field containing fasp link info. (default: 'fastq_aspera')
        Could also be 'submitted_aspera'.
+    -j Number of parallel download jobs (default: 1)
 
-Parallelising with GNU parallel:
-  N_PARALLEL=4
-  LINK_AGGREGATE_BANDWIDTH_MBPS=1000
-  cat my_accessions.txt | SHELL=\$(type -p bash) parallel --will-cite --jobs \"\${N_PARALLEL}\" --ungroup $(basename $0) -l \$((LINK_AGGREGATE_BANDWIDTH_MBPS/N_PARALLEL))m -a {} -o ./parent_dir/{}/"
+The script requires the following executables on the path:
+  ascp
+  parallel"
 
 #####
 # Set default command line options
@@ -26,11 +26,14 @@ max_bandwidth_mbps='50m'
 accessions=()
 out_dir='./'
 fields=( 'run_accession' )
+ascp_args=( '-P 33001' '-k1' '-QTr' )
+parallel_jobs=1
+parallel_args=( '--will-cite' '--ungroup' '--verbose' '--progress' )
 
 #####
 # Parse command line options
 #####
-while getopts ":ha:l:o:f:" opt; do
+while getopts ":ha:l:o:f:j:" opt; do
   case $opt in
     h) >&2 echo "${usage}"
        exit
@@ -42,6 +45,8 @@ while getopts ":ha:l:o:f:" opt; do
     o) out_dir=${OPTARG}
        ;;
     f) fields+=(${OPTARG})
+       ;;
+    j) parallel_jobs=${OPTARG}
        ;;
     ?) >&2 printf "Illegal option: '-%s'\n" "${OPTARG}"
        >&2 echo "{$usage}"
@@ -59,11 +64,7 @@ done
 # Validate/preprocess the inputs
 #####
 if [[ ${#accessions[@]} == 0 ]]; then
-  >&2 echo "$usage"
-  exit
-fi
-
-if [[ "${accession[@]}" != SRR* ]]; then
+  >&2 echo "ERROR: Must provide SRA accession."
   >&2 echo "$usage"
   exit
 fi
@@ -81,22 +82,29 @@ out_dir=${out_dir%/}
 #####
 mkdir -p "${out_dir}"
 for accession in ${accessions[@]}; do
+  >&2 echo "Processing SRA accession: ${accession}"
   # TODO Consider creating a URL for ddbj instead of EBI: http://trace.ddbj.nig.ac.jp/dra/faq_e.html ftp://ftp.ddbj.nig.ac.jp/ddbj_database/dra/fastq/SRA026/SRA026538/SRX186040/
   #   e.g. anonftp@ascp.ddbj.nig.ac.jp:/ddbj_database/dra/fastq/${submission_accession:0:6}/${submission_accession}/${accession}/${files}.fastq.bz2
 
   # Obtain run accessions for the requested submission accession
+  >&2 echo -n "  Downloading run accession information: "
   url="http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=${accession}&result=read_run&fields=${fields}&download=text"
   wget --continue --no-clobber -O "${out_dir}/${accession}.metadata" "${url}"
 
   # Extract the requested field and reformat the URLs ready for use by aspera
-  files=$(sed '1d' ${out_dir}/${accession}.metadata | cut -f 2 | tr ';' ' ' | sed 's/fasp.sra.ebi.ac.uk/era-fasp@fasp.sra.ebi.ac.uk/g')
+  files=( $(sed '1d' ${out_dir}/${accession}.metadata | cut -f 2 | tr ';' '\n' | sed 's/fasp.sra.ebi.ac.uk/era-fasp@fasp.sra.ebi.ac.uk/g') )
+  #>&2 echo "${files[@]}"
+  >&2 echo "  Number of run accessions available: ${#files[@]}"
 
-  ascp \
-    -i $(dirname $(which ascp))/../etc/asperaweb_id_dsa.openssh \
-    -P 33001 \
-    -k1 \
-    -QTr \
-    -l${max_bandwidth_mbps} \
-    ${files} ${out_dir}/
+  PRIVATE_KEY_FILE=$(dirname $(which ascp))/../etc/asperaweb_id_dsa.openssh
+
+  >&2 echo "  Number of parallel download jobs: ${parallel_jobs}"
+  >&2 echo "  Executing parallel download via Aspera's ascp:"
+  printf '%s\n' "${files[@]}" | SHELL=$(type -p bash) parallel --jobs "${parallel_jobs}" "${parallel_args[@]}" \
+    ascp \
+      -i "${PRIVATE_KEY_FILE}" \
+      -l${max_bandwidth_mbps} \
+      "${ascp_args[@]}" \
+      "{}" ${out_dir}/
 done
 
