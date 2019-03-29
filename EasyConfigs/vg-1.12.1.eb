@@ -1,0 +1,30 @@
+easyblock = 'CmdCp'
+
+name = 'vg'
+version = '1.12.1'
+
+homepage = 'https://github.com/vgteam/vg'
+description = """
+tools for working with genome variation graphs
+"""
+
+toolchain = {'name': 'dummy', 'version': ''}
+
+source_urls = ['https://github.com/vgteam/vg/releases/download/v%(version)s']
+sources = ['vg']
+
+checksums = [('sha256', '9f5c9f62406381a1ddd2b67192545e547bace1b1fd8fce7f568ca6ca9ece8f7a')]
+
+skipsteps = ['source','cmds_map']
+#skipsteps = ['cmds_map']
+
+cmds_map = [('vg', 'chmod a+x %(source)s; cp %(source)s .')]
+
+files_to_copy = [(['vg'], 'bin')]
+
+sanity_check_paths = {
+    'files': ['bin/vg'],
+    'dirs': [],
+}
+
+moduleclass = 'bio'
