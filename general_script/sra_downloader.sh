@@ -2,7 +2,7 @@
 #####
 # Usage info
 #####
-usage="USAGE: $(basename $0) [-h] -a <accession>... [-l <max bandwidth>] [-o <output dir>] [-f <field>]
+usage="USAGE: $(basename $0) [-h] -a <accession>... [-l <max bandwidth>] [-o <output dir>] [-f <field>] [-j <n parallel jobs>]
 Download FASTQ files associated with an SRA accession using Aspera.
 
   where:
