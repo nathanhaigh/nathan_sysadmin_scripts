@@ -3,7 +3,7 @@
 Lets set up some variables so we only operate on "old" files in a certain directory.
 
 ```bash
-DIR='/home'
+DIR="${HOME}"
 MODIFIED_MORE_THAN_DAYS=7
 MIN_SIZE='1G'
 ```
