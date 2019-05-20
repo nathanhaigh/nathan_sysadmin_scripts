@@ -19,10 +19,13 @@ have not been modified recently.
 #time find "${DIR}" -xdev -type f -size +"${MIN_SIZE}" -mtime +$((MODIFIED_MORE_THAN_DAYS-1)) -not \( -name "*.bam" -o -name "*.gz" -o -name \) -print0 | xargs -0 grep -Ilm1 .  > /dev/null
 
 # This doesn't choke on large text files and should be safe with filenames containing spaces
-time find "${DIR}" -xdev -depth -type f -size +"${MIN_SIZE}" -mtime +$((MODIFIED_MORE_THAN_DAYS-1)) -not \( -name "*.bam" -o -name "*.gz" \) -print0 \
+time find "${DIR}" -xdev -depth -type f -size +"${MIN_SIZE}" -mtime +$((MODIFIED_MORE_THAN_DAYS-1)) -not \( -name "*.bam" -o -name "*.gz" -o -name "*.bz2" \) -print0 \
   | xargs -0 file -n0iN \
   | fgrep -wa 'text/plain;' \
-  | cut -f1 -d '' \
+  > /tmp/candidate_large_plain_text_files.list
+
+# Report the sizes of the large, plain-text files
+cut -f1 -d '' /tmp/candidate_large_plain_text_files.list \
   | tr '\n' '\0' \
   | xargs -0 du -ch \
   | sort -h \
