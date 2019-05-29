@@ -22,14 +22,14 @@ have not been modified recently.
 time find "${DIR}" -xdev -depth -type f -size +"${MIN_SIZE}" -mtime +$((MODIFIED_MORE_THAN_DAYS-1)) -not \( -name "*.bam" -o -name "*.gz" -o -name "*.bz2" \) -print0 \
   | xargs -0 file -n0iN \
   | fgrep -wa 'text/plain;' \
-  > /tmp/candidate_large_plain_text_files.list
+  > candidate_large_plain_text_files.list
 
 # Report the sizes of the large, plain-text files
-cut -f1 -d '' /tmp/candidate_large_plain_text_files.list \
+cut -f1 -d '' candidate_large_plain_text_files.list \
   | tr '\n' '\0' \
   | xargs -0 du -ch \
   | sort -h \
-  | tee /tmp/large_plain_text_files.list
+  | tee large_plain_text_files.list
 ```
 
 ## Idenitfy Superfluous Directories Left by Bioinformatics Tools
@@ -43,7 +43,7 @@ consuming space. Let's try to identify these:
 find "${DIR}" -xdev -depth -type d -name ".STARtmp" -mtime +$((MODIFIED_MORE_THAN_DAYS-1)) -print0 \
   | xargs -0 du -chd0 \
   | sort -h \
-  | tee /tmp/star_tmp_dirs.list
+  | tee star_tmp_dirs.list
 ```
 
 ### MIRA
@@ -55,7 +55,7 @@ locate "*_d_results/*.maf" "*_d_results/*.caf" \
   | tr '\n' '\0' \
   | xargs -0 du -chd0 \
   | sort -h \
-  | tee /tmp/mira_maf-caf.list
+  | tee mira_maf-caf.list
 ```
 
 Let's also look for any MIRA `*_d_info` directories which may also not be needed:
@@ -65,7 +65,7 @@ locate _d_info \
   | tr '\n' '\0' \
   | xargs -0 du -chd0 \
   | sort -h \
-  | tee /tmp/mira_info.list
+  | tee mira_info.list
 ```
 
 ## Identify Redundant Genome Indicies
@@ -92,7 +92,7 @@ TMP_OUT="$(mktemp /tmp/tmp.XXXXXXXXXX.gz)"
 # Go through the MAF/CAF files and compress them
 #  This is done by compressing to /tmp first
 #  The owner and permissions of the compressed file are set to the same as the orignal uncompressed version
-time cut -f2 /tmp/mira_maf-caf.list | grep '^/home' | grep -v '^total$' | while read F; do
+time cut -f2 mira_maf-caf.list | grep '^/home' | grep -v '^total$' | while read F; do
   if [[ -e "${F}" ]]; then
     if [[ -s "${F}" ]]; then
       if [[ -e "${F}.gz" ]]; then
@@ -113,7 +113,7 @@ time cut -f2 /tmp/mira_maf-caf.list | grep '^/home' | grep -v '^total$' | while 
 done
 
 # Check owner of the compressed files
-#cut -f2 /tmp/mira_maf-caf.list | grep '^/home' | grep -v '^total$' | while read F; do
+#cut -f2 mira_maf-caf.list | grep '^/home' | grep -v '^total$' | while read F; do
 #  stat -c '%U' "${F}.gz"
 #done
 ```
@@ -217,7 +217,7 @@ TMP_OUT="$(mktemp /tmp/tmp.XXXXXXXXXX.tar.gz)"
 # Go through the MIRA *_d_info directories and compress them
 #  This is done by compressing to /tmp first
 #  The owner and permissions of the compressed file are transferred across from the original uncompressed directory
-time cut -f2 ~/mira_info.list | grep -v '^total$' | while read D; do
+time cut -f2 mira_info.list | grep -v '^total$' | while read D; do
   if [[ -e "${D}" ]]; then
     D_BYTE_SIZE=$(du -B 1 ${D} | cut -f1)
     if [[ "${D_BYTE_SIZE}" -gt 1073741824 ]]; then
